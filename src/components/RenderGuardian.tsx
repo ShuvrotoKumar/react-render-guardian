@@ -1,16 +1,39 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { renderStore, trackRender, pushParentRendered, popParentRendered } from './core/renderStore';
+import { renderStore } from './core/renderStore';
 import { consoleReporter } from './reporters/consoleReporter';
 import type {
   RenderGuardianConfig,
-  RenderRules,
   RenderStats,
   TrackedComponent,
-} from './types/types';
+} from './types';
+import {
+  trackRender,
+  detectWhyDidRender,
+  pushParentRendered,
+  popParentRendered,
+  getParentRenderedSet,
+} from './core/tracker';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
-export interface RenderGuardianProps extends Partial<RenderGuardianConfig> {
+export interface RenderGuardianProps {
+  enabled?: boolean;
+  track?: string[];
+  ignore?: string[];
+  maxHistory?: number;
+  panel?: boolean;
+  consoleReporter?: boolean;
+  rules?: {
+    maxRenders?: number;
+    maxAverageRenderTime?: number;
+    maxRenderTime?: number;
+    warnOnFunctionPropChanges?: boolean;
+    warnOnPossibleRedundantRenders?: boolean;
+  };
+  onRuleViolation?: (event: { componentName: string; message: string }) => void;
+  reporter?: 'console' | 'json' | 'summary';
+  logLevel?: 'silent' | 'error' | 'warn' | 'info' | 'verbose';
+  autoTrack?: boolean;
   children: React.ReactNode;
 }
 
@@ -27,6 +50,7 @@ export const RenderGuardian: React.FC<RenderGuardianProps> = (props) => {
     reporter,
     logLevel = 'info',
     autoTrack,
+    children,
   } = props;
 
   renderStore.configure({
@@ -64,7 +88,7 @@ export const RenderGuardian: React.FC<RenderGuardianProps> = (props) => {
       if (ignore && ignore.includes(event.componentName)) return;
 
       const duration = event.duration ?? undefined;
-      const parentRendered = event.parentRendered ?? renderedComponents.current.has(event.componentName);
+      const parentRendered = renderedComponents.current.has(event.componentName);
 
       trackRender(
         event.componentName,
@@ -102,7 +126,6 @@ export const RenderGuardian: React.FC<RenderGuardianProps> = (props) => {
   const handleParentUnmount = (componentName: string) => {
     if (enabled) {
       // Don't pop - parent could render multiple times
-      // The stack just tracks current parent render context
     }
   };
 

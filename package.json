@@ -1,17 +1,36 @@
 {
   "name": "react-render-guardian",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A React development tool to identify, understand, and investigate unnecessary or expensive component renders",
+  "main": "dist/react-render-guardian.cjs.js",
+  "module": "dist/react-render-guardian.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint src --ext .ts,.tsx",
+    "format": "prettier --write src/**/*.ts src/**/*.tsx",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "coverage": "vitest run --coverage"
   },
-  "keywords": [],
+  "keywords": [
+    "react",
+    "render",
+    "guardian",
+    "performance",
+    "debugging"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "devDependencies": {
     "@changesets/cli": "^3.0.1",
+    "@types/node": "^26.4.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "@vitest/coverage-v8": "^4.1.11",
@@ -21,6 +40,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "typescript": "^7.0.2",
+    "vite": "^5.4.21",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.11"
   }

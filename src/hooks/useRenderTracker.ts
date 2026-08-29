@@ -1,5 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { renderStore, TrackedComponent, RenderReason } from '../types/types';
+import { renderStore } from '../core/renderStore';
+import type { RenderStats, PropChange, GuardianSuggestion } from '../types';
+import { TrackedComponent, RenderEvent, RenderReason } from '../types';
 import { trackRender, detectWhyDidRender } from '../core/tracker';
 
 export interface UseRenderTrackerOptions {
@@ -17,12 +19,12 @@ export function useRenderTracker(
   const maxWhyDidRenderHistory = options.maxWhyDidRenderHistory ?? 10;
 
   const renderCountRef = useRef(0);
-  const durationRef = useRef< number[] >([]);
+  const durationRef = useRef<number[]>([]);
   const lastRenderRef = useRef(Date.now());
   const whyDidRenderHistoryRef = useRef<RenderReason[][]>([]);
 
   useEffect(() => {
-    return renderStore.subscribe((event) => {
+    return renderStore.subscribe((event: RenderEvent) => {
       if (event.componentName !== componentName) return;
 
       renderCountRef.current += 1;
@@ -89,16 +91,17 @@ export function useRenderTracker(
 
   const whyDidRender = useCallback(() => {
     const component = renderStore.getComponent(componentName);
-    if (!component) return { reasons: [], propChanges: [], suggestions: [] };
+    if (!component) {
+      return { reasons: [] as RenderReason[], propChanges: [] as PropChange[], suggestions: [] as GuardianSuggestion[] };
+    }
 
-    // Get previous props from the last render event
     const lastRender = component.renderHistory.at(-1);
     const previousReasons = lastRender?.reasons || [];
 
     return {
       reasons: previousReasons,
-      propChanges: [],
-      suggestions: [],
+      propChanges: [] as PropChange[],
+      suggestions: [] as GuardianSuggestion[],
     };
   }, [componentName]);
 

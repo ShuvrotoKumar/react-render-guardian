@@ -1,4 +1,3 @@
-import { renderStore } from './renderStore';
 import {
   RenderEvent,
   RenderReason,
@@ -9,7 +8,8 @@ import {
   RenderStats,
   TrackedComponent,
   RenderGuardianConfig,
-} from '../types/types';
+} from '../types';
+import { renderStore } from './renderStore';
 
 type ProfilerId = string | number;
 
@@ -31,7 +31,7 @@ export function trackRender(
   componentName: string,
   duration?: number,
   parentRendered?: boolean,
-  propChanges?: { field?: string; type?: 'primitive' | 'object' | 'array' | 'function' }[],
+  propChanges?: PropChange[],
   contextChanges?: string[],
   isInitialMount?: boolean
 ): RenderEvent {
@@ -43,14 +43,10 @@ export function trackRender(
 
   const propChangeDetails = propChanges?.map((pc) => ({
     field: pc.field,
-    previousValue: pc.field
-      ? previousRender?.renderHistory.at(-1)?.propChanges?.find(
-          (pc2) => pc2.field === pc.field
-        )?.previousValue
-      : undefined,
-    currentValue: pc.field,
+    previousValue: pc.previousValue,
+    currentValue: pc.currentValue,
     type: pc.type,
-    referenceChanged: true,
+    referenceChanged: pc.referenceChanged,
   }));
 
   const reasons: RenderReason[] = [];
@@ -112,9 +108,9 @@ export function trackRender(
 
   return renderStore.recordRender(componentName, {
     duration,
-    durationSincePrevious,
+    durationSincePrevious: timeSincePrevious,
     parentRendered,
-    propChanges: propChanges,
+    propChanges,
     contextChanges,
     reasons,
   });
@@ -229,56 +225,56 @@ function compareProps(
   previous: unknown,
   current: unknown,
   maxDepth: number
-): { field: string; type: 'primitive' | 'object' | 'array' | 'function'; }[] {
-  const changes: { field: string; type: 'primitive' | 'object' | 'array' | 'function'; }[] = [];
+): PropChange[] {
+  const changes: PropChange[] = [];
 
   if (previous === current) {
     return changes;
   }
 
   if (maxDepth <= 0) {
-    changes.push({ field: '<deep>', type: 'object' });
+    changes.push({ field: '<deep>', type: 'object', previousValue: '...', currentValue: '...', referenceChanged: true });
     return changes;
   }
 
   if (previous == null || current == null) {
     if (previous !== current) {
-      changes.push({ field: '<null comparison>', type: 'object' });
+      changes.push({ field: '<null comparison>', type: 'object', previousValue: String(previous), currentValue: String(current), referenceChanged: true });
     }
     return changes;
   }
 
   if (Array.isArray(previous) && Array.isArray(current)) {
     if (previous !== current) {
-      changes.push({ field: '<array>', type: 'array' });
+      changes.push({ field: '<array>', type: 'array', previousValue: JSON.stringify(previous.slice(0, 3)), currentValue: JSON.stringify(current.slice(0, 3)), referenceChanged: true });
     }
     return changes;
   }
 
   if (typeof previous === 'function' && typeof current === 'function') {
     if (previous !== current) {
-      changes.push({ field: '<function>', type: 'function' });
+      changes.push({ field: '<function>', type: 'function', previousValue: previous.toString().slice(0, 100), currentValue: current.toString().slice(0, 100), referenceChanged: true });
     }
     return changes;
   }
 
   if (typeof previous !== 'object' || typeof current !== 'object') {
-    changes.push({ field: String(current), type: 'primitive' });
+    changes.push({ field: String(current), type: 'primitive', previousValue: String(previous), currentValue: String(current), referenceChanged: false });
     return changes;
   }
 
-  const prevKeys = new Set(Object.keys(previous));
-  const currKeys = new Set(Object.keys(current));
+  const prevKeys = new Set(Object.keys(previous as Record<string, unknown>));
+  const currKeys = new Set(Object.keys(current as Record<string, unknown>));
 
   for (const key of prevKeys) {
     if (!currKeys.has(key)) {
-      changes.push({ field: key, type: 'object' });
+      changes.push({ field: key, type: 'object', previousValue: String((previous as Record<string, unknown>)[key]), currentValue: '<removed>', referenceChanged: true });
     }
   }
 
   for (const key of currKeys) {
     if (!prevKeys.has(key)) {
-      changes.push({ field: key, type: 'object' });
+      changes.push({ field: key, type: 'object', previousValue: '<added>', currentValue: String((current as Record<string, unknown>)[key]), referenceChanged: true });
     }
   }
 
@@ -289,7 +285,7 @@ function compareProps(
         (current as Record<string, unknown>)[key],
         maxDepth - 1
       );
-      subChanges.forEach((c) => changes.push({ field: `${key}.${c.field}`, type: c.type }));
+      subChanges.forEach((c) => changes.push({ field: `${key}.${c.field}`, type: c.type, previousValue: c.previousValue, currentValue: c.currentValue, referenceChanged: c.referenceChanged }));
     }
   }
 

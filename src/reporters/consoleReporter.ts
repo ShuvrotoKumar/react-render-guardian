@@ -1,5 +1,13 @@
-import { renderStore, TrackedComponent, RenderEvent, RenderReason, GuardianIssue, GuardianSuggestion, RuleViolation, RenderGuardianConfig } from '../types/types';
-import { detectWhyDidRender } from '../core/tracker';
+import { renderStore } from '../core/renderStore';
+import type {
+  RenderEvent,
+  RenderReason,
+  GuardianIssue,
+  GuardianSuggestion,
+  RuleViolation,
+  RenderGuardianConfig,
+  TrackedComponent,
+} from '../types';
 
 const colorMap: Record<string, string> = {
   info: 'color: #666666',
@@ -17,7 +25,7 @@ const levelIconMap: Record<string, string> = {
 
 function formatDuration(ms: number): string {
   if (ms < 0.016) {
-    return `< 16ms`;
+    return '< 16ms';
   }
   return `${ms.toFixed(1)}ms`;
 }
@@ -63,9 +71,7 @@ function renderEventToString(event: RenderEvent, config: RenderGuardianConfig): 
     ? `\n  Possible reasons:\n    • ${reasonStrings.join('\n    • ')}`
     : '';
 
-  const suggestionSection = event.reasons && event.reasons.length > 0
-    ? generateSuggestions(event)
-    : '';
+  const suggestionSection = generateSuggestions(event);
 
   return `[Render Guardian] ${icon} ${event.componentName} rendered${reasonsSection}\n  Duration: ${duration}${timeSincePrevious !== '' ? ` (${timeSincePrevious})` : ''}${suggestionSection}`;
 }
@@ -136,7 +142,7 @@ function formatComponentStats(component: TrackedComponent, config: RenderGuardia
 }
 
 export function consoleReporter(config: RenderGuardianConfig = {}): void {
-  const store = renderStore.getInstance() || renderStore;
+  const store = renderStore;
 
   const trackedComponents = store.getTrackedComponents();
 
@@ -152,8 +158,9 @@ export function consoleReporter(config: RenderGuardianConfig = {}): void {
   console.log('%c[Render Guardian]', 'color: #007acc; font-weight: bold; font-size: 14px;');
 
   // Show hot components first
+  const maxRenders = config.rules?.maxRenders || 20;
   const hotComponents = trackedComponents
-    .filter((c) => c.renderCount > (config.rules?.maxRenders || 20))
+    .filter((c) => c.renderCount > maxRenders)
     .sort((a, b) => b.renderCount - a.renderCount);
 
   if (hotComponents.length > 0) {
