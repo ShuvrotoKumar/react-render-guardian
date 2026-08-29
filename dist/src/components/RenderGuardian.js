@@ -2,7 +2,7 @@ import { Fragment as _Fragment, jsx as _jsx } from "react/jsx-runtime";
 import { useEffect, useRef } from 'react';
 import { renderStore } from './core/renderStore';
 import { consoleReporter } from './reporters/consoleReporter';
-import { trackRender, pushParentRendered } from './core/tracker';
+import { trackRender, pushParentRendered, } from './core/tracker';
 const isDevelopment = process.env.NODE_ENV !== 'production';
 export const RenderGuardian = (props) => {
     const { enabled = isDevelopment, track, ignore, maxHistory, panel, consoleReporter: consoleReporterProp, rules, onRuleViolation, reporter, logLevel = 'info', autoTrack, children, } = props;

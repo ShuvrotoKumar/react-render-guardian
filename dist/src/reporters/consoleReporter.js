@@ -19,7 +19,11 @@ function formatDuration(ms) {
 }
 function renderReasonToString(reason) {
     const type = reason.type;
-    const field = reason.field || reason.contextName || '';
+    const field = reason.type !== 'unknown' && reason.field
+        ? reason.field
+        : reason.type !== 'context-changed' && reason.contextName
+            ? reason.contextName
+            : '';
     switch (type) {
         case 'initial-mount':
             return 'Initial mount';
@@ -36,7 +40,7 @@ function renderReasonToString(reason) {
         case 'context-changed':
             return `Context changed: ${field}`;
         case 'unknown':
-            return `Unknown: ${field}`;
+            return 'Unknown cause';
         default:
             return String(type);
     }
