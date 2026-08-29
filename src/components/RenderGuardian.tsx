@@ -1,18 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { renderStore } from './core/renderStore';
-import { consoleReporter } from './reporters/consoleReporter';
-import type {
-  RenderGuardianConfig,
-  RenderStats,
-  TrackedComponent,
-} from './types';
+import { renderStore } from '../core/renderStore';
+import type { RenderGuardianConfig, RenderStats, TrackedComponent } from '../types';
 import {
   trackRender,
   detectWhyDidRender,
   pushParentRendered,
   popParentRendered,
   getParentRenderedSet,
-} from './core/tracker';
+} from '../core/tracker';
+import { useInteractionTracker, trackInteraction } from '../core/interactionTracker';
+import { consoleReporter } from '../reporters/consoleReporter';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -29,6 +26,10 @@ export interface RenderGuardianProps {
     maxRenderTime?: number;
     warnOnFunctionPropChanges?: boolean;
     warnOnPossibleRedundantRenders?: boolean;
+    maxBlastRadius?: number;
+    maxRendersPerInteraction?: number;
+    maxAverageRenderDuration?: number;
+    maxTotalInteractionRenderTime?: number;
   };
   onRuleViolation?: (event: { componentName: string; message: string }) => void;
   reporter?: 'console' | 'json' | 'summary';

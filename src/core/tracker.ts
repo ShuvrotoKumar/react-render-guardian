@@ -11,6 +11,8 @@ import {
 } from '../types';
 import { renderStore } from './renderStore';
 
+export { useInteractionTracker, trackInteraction } from './interactionTracker';
+
 type ProfilerId = string | number;
 
 const parentRenderedStack: Set<string> = new Set();
