@@ -1,6 +1,6 @@
 {
   "name": "react-render-guardian",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A React development tool to identify, understand, and investigate unnecessary or expensive component renders",
   "main": "dist/react-render-guardian.cjs.js",
   "module": "dist/react-render-guardian.esm.js",
